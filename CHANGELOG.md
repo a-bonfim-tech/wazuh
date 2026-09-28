@@ -21,6 +21,12 @@ All notable changes to this project will be documented in this file.
 - Added macOS support to the disable-account active response. ([#39463](https://github.com/wazuh/wazuh/pull/39463))
 - Fixed the Windows agent reporting the operating system it had before an in-place feature update. ([#39547](https://github.com/wazuh/wazuh/pull/39547))
 
+### RESTful API
+
+#### Fixed
+
+- Fixed configuration masking not applying to XML tags written with whitespace or attributes, and extended it to the HAProxy helper passwords. ([#39663](https://github.com/wazuh/wazuh/pull/39663))
+
 ## [v4.14.9]
 
 ### Manager
