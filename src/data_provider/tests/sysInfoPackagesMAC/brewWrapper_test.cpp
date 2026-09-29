@@ -10,6 +10,7 @@
  */
 
 #include "gtest/gtest.h"
+#include <optional>
 #include "packages/packageMac.h"
 #include "packages/brewWrapper.h"
 #include <limits.h>
@@ -43,12 +44,12 @@ TEST(BrewWrapperTest, SizeSumsKegDirectory)
     EXPECT_EQ(wrapper->size(), 350);
 }
 
-TEST(BrewWrapperTest, SizeIsZeroWhenKegIsMissing)
+TEST(BrewWrapperTest, SizeIsUnknownWhenKegIsMissing)
 {
     const std::string cellarPath {currentWorkingDirectory() + "/input_files/Cellar"};
     const PackageContext ctx {cellarPath, "does_not_exist", "0.0.0"};
 
     std::shared_ptr<BrewWrapper> wrapper;
     EXPECT_NO_THROW(wrapper = std::make_shared<BrewWrapper>(ctx));
-    EXPECT_EQ(wrapper->size(), 0);
+    EXPECT_EQ(wrapper->size(), std::nullopt);
 }

@@ -88,15 +88,15 @@ namespace file_system
         return ec ? 0 : size;
     }
 
-    std::uintmax_t FileSystemWrapper::directory_size(const std::filesystem::path& path,
-                                                     std::uintmax_t maxEntries,
-                                                     std::chrono::milliseconds deadline) const
+    std::optional<std::uintmax_t> FileSystemWrapper::directory_size(const std::filesystem::path& path,
+                                                                    std::uintmax_t maxEntries,
+                                                                    std::chrono::milliseconds deadline) const
     {
         std::error_code ec;
 
         if (!std::filesystem::is_directory(path, ec) || ec)
         {
-            return 0;
+            return std::nullopt;
         }
 
         const auto start = std::chrono::steady_clock::now();
@@ -107,7 +107,7 @@ namespace file_system
 
         if (ec)
         {
-            return 0;
+            return std::nullopt;
         }
 
         std::uintmax_t total {0};
@@ -117,12 +117,12 @@ namespace file_system
         {
             if (++entries > maxEntries)
             {
-                return 0;
+                return std::nullopt;
             }
 
             if (std::chrono::steady_clock::now() - start > deadline)
             {
-                return 0;
+                return std::nullopt;
             }
 
             // is_symlink() never follows the link, unlike is_regular_file(), which does. Skipping it here
@@ -132,7 +132,7 @@ namespace file_system
 
             if (ec)
             {
-                return 0;
+                return std::nullopt;
             }
 
             if (!isSymlink)
@@ -141,7 +141,7 @@ namespace file_system
 
                 if (ec)
                 {
-                    return 0;
+                    return std::nullopt;
                 }
 
                 if (isRegularFile)
@@ -150,7 +150,7 @@ namespace file_system
 
                     if (ec)
                     {
-                        return 0;
+                        return std::nullopt;
                     }
 
                     total += size;
@@ -161,7 +161,7 @@ namespace file_system
 
             if (ec)
             {
-                return 0;
+                return std::nullopt;
             }
         }
 

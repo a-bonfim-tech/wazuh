@@ -213,6 +213,11 @@ static std::string getItemChecksum(const nlohmann::json& item)
 static const std::map<std::string, std::vector<std::string>> VOLATILE_FIELDS_BY_TABLE
 {
     {HW_TABLE, {"memory_free", "memory_used"}},
+    // A package's size is measured by walking its files, so it can come back different, or not
+    // at all, without the package having changed: a file removed mid-walk, an entry cap or a
+    // deadline. Keeping it out of the checksum means such a scan neither reports a change nor
+    // overwrites the stored value, while the state document still carries the latest reading.
+    {PACKAGES_TABLE, {"size"}},
     {PROCESSES_TABLE, {"utime", "stime"}},
     {
         NET_IFACE_TABLE,
@@ -1759,7 +1764,10 @@ void Syscollector::scanPackages()
             nlohmann::json input;
 
             sanitizeJsonValue(rawData);
-            rawData["checksum"] = getItemChecksum(rawData);
+
+            auto checksumInput = rawData;
+            eraseVolatileFields(checksumInput, PACKAGES_TABLE);
+            rawData["checksum"] = getItemChecksum(checksumInput);
 
             input["table"] = PACKAGES_TABLE;
             m_spNormalizer->normalize("packages", rawData);

@@ -13,6 +13,7 @@
 #define _MACPORTS_WRAPPER_H
 
 #include "ipackageWrapper.h"
+#include <optional>
 #include "sqliteWrapperTemp.h"
 #include "sharedDefs.h"
 #include <filesystem>
@@ -45,7 +46,7 @@ class MacportsWrapper final : public IPackageWrapper
             , m_source{UNKNOWN_VALUE}
             , m_location{UNKNOWN_VALUE}
             , m_priority{UNKNOWN_VALUE}
-            , m_size{0}
+            , m_size{std::nullopt}
             , m_vendor{UNKNOWN_VALUE}
             , m_installTime{UNKNOWN_VALUE}
         {
@@ -100,7 +101,7 @@ class MacportsWrapper final : public IPackageWrapper
             return m_priority;
         }
 
-        int64_t size() const override
+        std::optional<int64_t> size() const override
         {
             return m_size;
         }
@@ -229,7 +230,7 @@ class MacportsWrapper final : public IPackageWrapper
         std::string m_location;
         std::string m_multiarch;
         std::string m_priority;
-        int64_t m_size;
+        std::optional<int64_t> m_size;
         std::string m_vendor;
         std::string m_installTime;
 };

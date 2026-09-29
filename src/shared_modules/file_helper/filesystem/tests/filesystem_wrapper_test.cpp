@@ -5,6 +5,7 @@
 #include <chrono>
 #include <cstdlib>
 #include <filesystem>
+#include <optional>
 #include <fstream>
 #include <string>
 
@@ -73,17 +74,17 @@ TEST_F(FileSystemWrapperTest, FileSizeOnDirectoryReturnsZero)
     EXPECT_EQ(m_fs.file_size(m_root), 0u);
 }
 
-TEST_F(FileSystemWrapperTest, DirectorySizeMissingDirectoryReturnsZero)
+TEST_F(FileSystemWrapperTest, DirectorySizeMissingDirectoryReturnsNoValue)
 {
-    EXPECT_EQ(m_fs.directory_size(m_root / "does_not_exist", 1000, std::chrono::milliseconds(1000)), 0u);
+    EXPECT_EQ(m_fs.directory_size(m_root / "does_not_exist", 1000, std::chrono::milliseconds(1000)), std::nullopt);
 }
 
-TEST_F(FileSystemWrapperTest, DirectorySizeOnFileReturnsZero)
+TEST_F(FileSystemWrapperTest, DirectorySizeOnFileReturnsNoValue)
 {
     const auto filePath = m_root / "a.txt";
     writeFile(filePath, 10);
 
-    EXPECT_EQ(m_fs.directory_size(filePath, 1000, std::chrono::milliseconds(1000)), 0u);
+    EXPECT_EQ(m_fs.directory_size(filePath, 1000, std::chrono::milliseconds(1000)), std::nullopt);
 }
 
 TEST_F(FileSystemWrapperTest, DirectorySizeSumsNestedFiles)
@@ -96,7 +97,7 @@ TEST_F(FileSystemWrapperTest, DirectorySizeSumsNestedFiles)
     EXPECT_EQ(m_fs.directory_size(m_root, 1000, std::chrono::milliseconds(1000)), 60u);
 }
 
-TEST_F(FileSystemWrapperTest, DirectorySizeEntryCapReturnsZero)
+TEST_F(FileSystemWrapperTest, DirectorySizeEntryCapReturnsNoValue)
 {
     writeFile(m_root / "one.bin", 10);
     writeFile(m_root / "two.bin", 20);
@@ -104,16 +105,16 @@ TEST_F(FileSystemWrapperTest, DirectorySizeEntryCapReturnsZero)
 
     // Only one entry allowed, but the directory holds three: the cap must be hit before
     // any of them is summed.
-    EXPECT_EQ(m_fs.directory_size(m_root, 1, std::chrono::milliseconds(1000)), 0u);
+    EXPECT_EQ(m_fs.directory_size(m_root, 1, std::chrono::milliseconds(1000)), std::nullopt);
 }
 
-TEST_F(FileSystemWrapperTest, DirectorySizeDeadlineReturnsZero)
+TEST_F(FileSystemWrapperTest, DirectorySizeDeadlineReturnsNoValue)
 {
     writeFile(m_root / "one.bin", 10);
 
     // A negative deadline is already exceeded before the first entry is inspected,
     // regardless of how fast the walk runs.
-    EXPECT_EQ(m_fs.directory_size(m_root, 1000, std::chrono::milliseconds(-1)), 0u);
+    EXPECT_EQ(m_fs.directory_size(m_root, 1000, std::chrono::milliseconds(-1)), std::nullopt);
 }
 
 TEST_F(FileSystemWrapperTest, DirectorySizeNeverReturnsPartialSum)
@@ -123,10 +124,12 @@ TEST_F(FileSystemWrapperTest, DirectorySizeNeverReturnsPartialSum)
     writeFile(m_root / "three.bin", 30);
 
     // The cap is hit on the second entry: a partial-sum implementation would report 10
-    // (the first file alone). The contract requires 0 instead.
+    // (the first file alone). The contract requires no value at all, so the caller can tell
+    // a failed measurement from a directory that genuinely holds nothing.
     const auto result = m_fs.directory_size(m_root, 1, std::chrono::milliseconds(1000));
-    EXPECT_EQ(result, 0u);
+    EXPECT_EQ(result, std::nullopt);
     EXPECT_NE(result, 10u);
+    EXPECT_NE(result, 0u);
 }
 
 TEST_F(FileSystemWrapperTest, DirectorySizeCountsSymlinkedFileOnce)

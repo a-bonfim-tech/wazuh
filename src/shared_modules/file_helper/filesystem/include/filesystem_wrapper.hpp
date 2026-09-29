@@ -67,9 +67,9 @@ namespace file_system
             std::uintmax_t file_size(const std::filesystem::path& path) const override;
 
             /// @copydoc IFileSystemWrapper::directory_size
-            std::uintmax_t directory_size(const std::filesystem::path& path,
-                                          std::uintmax_t maxEntries,
-                                          std::chrono::milliseconds deadline) const override;
+            std::optional<std::uintmax_t> directory_size(const std::filesystem::path& path,
+                                                         std::uintmax_t maxEntries,
+                                                         std::chrono::milliseconds deadline) const override;
     };
 } // namespace file_system
 // LCOV_EXCL_STOP

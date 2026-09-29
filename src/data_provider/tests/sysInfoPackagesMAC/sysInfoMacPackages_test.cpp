@@ -11,6 +11,7 @@
 
 #include "sysInfoMacPackages_test.h"
 #include <climits>
+#include <optional>
 #include <unistd.h>
 #include "packages/packageMac.h"
 #include "packages/macportsWrapper.h"
@@ -44,7 +45,7 @@ class SysInfoMacPackagesWrapperMock: public IPackageWrapper
         MOCK_METHOD(std::string, source, (), (const override));
         MOCK_METHOD(std::string, location, (), (const override));
         MOCK_METHOD(std::string, priority, (), (const override));
-        MOCK_METHOD(int64_t, size, (), (const override));
+        MOCK_METHOD((std::optional<int64_t>), size, (), (const override));
         MOCK_METHOD(std::string, vendor, (), (const override));
         MOCK_METHOD(std::string, install_time, (), (const override));
         MOCK_METHOD(std::string, multiarch, (), (const override));
@@ -196,7 +197,7 @@ TEST_F(SysInfoMacPackagesTest, macPortsSizeSkipsSymlinksInTheFileList)
     std::filesystem::remove(link, ec);
 }
 
-TEST_F(SysInfoMacPackagesTest, macPortsSizeIsZeroWhenTheFileListIsAbsent)
+TEST_F(SysInfoMacPackagesTest, macPortsSizeIsUnknownWhenTheFileListIsAbsent)
 {
     auto mockStatement { std::make_unique<MockStatement>() };
     EXPECT_CALL(*mockStatement, columnsCount()).WillOnce(Return(6));
@@ -230,7 +231,7 @@ TEST_F(SysInfoMacPackagesTest, macPortsSizeIsZeroWhenTheFileListIsAbsent)
 
     MacportsWrapper macportsMock(*mockStatement);
 
-    EXPECT_EQ(macportsMock.size(), 0);
+    EXPECT_EQ(macportsMock.size(), std::nullopt);
 }
 
 TEST_F(SysInfoMacPackagesTest, macPortsValidData)
