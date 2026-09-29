@@ -982,9 +982,12 @@ class AuthenticationManager(RBACManager):
             # hash or an already-migrated account) is a live sample of its real cost
             # on this host right now. Keep the padding target below refreshed with it
             # instead of relying only on the one-off measurement taken at import time,
-            # which can drift from the current load.
+            # which can drift from the current load. An exponential moving average
+            # (not a straight overwrite) keeps a single slow sample from moving the
+            # target by more than 20%, while still converging within a few samples
+            # if the load actually changed.
             global _DEFAULT_HASH_CHECK_SECONDS
-            _DEFAULT_HASH_CHECK_SECONDS = check_elapsed
+            _DEFAULT_HASH_CHECK_SECONDS = 0.8 * _DEFAULT_HASH_CHECK_SECONDS + 0.2 * check_elapsed
 
         if user is not None and not hash_to_check.startswith(f'{_DEFAULT_HASH_METHOD}:'):
             if result:
