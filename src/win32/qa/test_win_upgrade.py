@@ -2,10 +2,12 @@ import pathlib
 import os
 import hashlib
 import pytest
+import subprocess
 
 RELEASED_PATH = 'C:\\win-agent-released\\'
 BASE_PATH = 'C:\\win-agent-base\\'
 INSTALL_PATH = 'C:\\Program Files (x86)\\ossec-agent\\'
+AUTHENTICATED_USERS_SID = 'S-1-5-11'
 
 
 def populate_dict(dict, files_list):
@@ -79,3 +81,29 @@ def test_win_upgrade():
                 tuple((key, installed_files_dict[key], files_to_install_dict[key])))
 
     assert success, f"The following binaries have a hash mismatch: '{failed_keys}'"
+
+
+def test_win_upgrade_shared_dir_not_readable_by_authenticated_users():
+    # Runs after test_win_upgrade, on the upgraded installation. The released version grants
+    # Authenticated Users read access to the shared directory, so this also checks that the
+    # upgrade strips it from the files that were already there.
+    shared_path = INSTALL_PATH + 'shared'
+    assert os.path.isdir(shared_path), f"Directory '{shared_path}' not found"
+
+    # Compare by SID: account names are localized
+    script = (
+        f"$items = @(Get-Item -LiteralPath '{shared_path}') + "
+        f"@(Get-ChildItem -LiteralPath '{shared_path}' -Recurse -Force); "
+        "foreach ($item in $items) { "
+        "$rules = (Get-Acl -LiteralPath $item.FullName).GetAccessRules("
+        "$true, $true, [System.Security.Principal.SecurityIdentifier]); "
+        "foreach ($rule in $rules) { "
+        f"if ($rule.IdentityReference.Value -eq '{AUTHENTICATED_USERS_SID}') {{ $item.FullName }} "
+        "} }"
+    )
+    result = subprocess.run(['powershell', '-NoProfile', '-NonInteractive', '-Command', script],
+                            capture_output=True, text=True)
+    assert result.returncode == 0, f"Failed to read the ACLs under '{shared_path}': {result.stderr}"
+
+    exposed = sorted(set(line.strip() for line in result.stdout.splitlines() if line.strip()))
+    assert not exposed, f"Authenticated Users still has access to: {exposed}"

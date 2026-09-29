@@ -462,6 +462,14 @@ Public Function SetWazuhPermissions()
         remAuthenticatedUsersPermsTmpDir = "icacls """ & home_dir & "tmp" & """ /remove:g *S-1-5-11 /q"
         WshShell.run remAuthenticatedUsersPermsTmpDir, 0, True
 
+        ' Remove the Authenticated Users group from the shared directory and everything below it,
+        ' so the centrally distributed group configuration (agent.conf, merged.mg and the rest of
+        ' the pushed files) is not readable by local users. Files the agent writes there later
+        ' inherit only the Administrators and SYSTEM entries, and a file replaced in place keeps
+        ' the restricted DACL of the file it replaces.
+        remAuthenticatedUsersPermsSharedDir = "icacls """ & home_dir & "shared" & """ /remove:g *S-1-5-11 /t /q"
+        WshShell.run remAuthenticatedUsersPermsSharedDir, 0, True
+
     End If
 End Function
 
