@@ -42,16 +42,18 @@ Log output format for Wazuh daemon logs.
 
 ## Configuration Examples
 
+The examples use the manager root, `<wazuh_config>`. On an agent the block lives inside `<ossec_config>`, and only the first `<log_format>` in `ossec.conf` is read, so edit the existing block rather than adding a second one.
+
 ### Default Configuration (Plain Text)
 
 Standard plain text logging for human readability:
 
 ```xml
-<ossec_config>
+<wazuh_config>
   <logging>
     <log_format>plain</log_format>
   </logging>
-</ossec_config>
+</wazuh_config>
 ```
 
 ### JSON Logging Only
@@ -59,11 +61,11 @@ Standard plain text logging for human readability:
 Structured JSON output for integration with log aggregation systems (Elasticsearch, Splunk, etc.):
 
 ```xml
-<ossec_config>
+<wazuh_config>
   <logging>
     <log_format>json</log_format>
   </logging>
-</ossec_config>
+</wazuh_config>
 ```
 
 ### Dual Output (Plain and JSON)
@@ -71,11 +73,11 @@ Structured JSON output for integration with log aggregation systems (Elasticsear
 Output both plain text and JSON logs simultaneously:
 
 ```xml
-<ossec_config>
+<wazuh_config>
   <logging>
     <log_format>plain,json</log_format>
   </logging>
-</ossec_config>
+</wazuh_config>
 ```
 
 **Use case:** Maintain human-readable logs for troubleshooting while also feeding structured JSON to SIEM/log aggregation tools.

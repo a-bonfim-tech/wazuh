@@ -547,9 +547,14 @@ Active Response uses a metadata-driven approach where all execution metadata is 
 `ExecdRun()` function in `os_execd/src/execd.c` extracts metadata directly from the JSON message:
 
 ```c
-// Extract metadata directly from JSON
-exec_cmd = cJSON_GetObjectItem(json_root, "executable")->valuestring;
-timeout = cJSON_GetObjectItem(json_root, "timeout")->valueint;
+// Executable name and AR metadata come from wazuh.active_response
+cJSON *json_ar = cJSON_GetObjectItem(cJSON_GetObjectItem(json_root, "wazuh"), "active_response");
+name = cJSON_GetObjectItem(json_ar, "executable")->valuestring;
+
+// Only a stateful response gets a timeout; stateful_timeout 0 makes it stateless
+if (strcmp(cJSON_GetObjectItem(json_ar, "type")->valuestring, "stateful") == 0) {
+    timeout_value = (int)cJSON_GetObjectItem(json_ar, "stateful_timeout")->valuedouble;
+}
 ```
 
 This approach eliminates the need for configuration lookups and reduces agent-side complexity.
