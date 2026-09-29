@@ -528,8 +528,8 @@ def _has_update_permissions(update_actions: list = None, update_resources: list 
     Returns
     -------
     bool
-        True if user has 'manager:update_config' or 'cluster:update_config', or `update_actions` on every
-        requested resource when given, False otherwise.
+        True if user has 'manager:update_config' or 'cluster:update_config' (in black mode, if no policy denies
+        them), or `update_actions` on every requested resource when given, False otherwise.
     """
     perms = rbac.get() or {}
     if update_actions:
@@ -549,6 +549,15 @@ def _has_update_permissions(update_actions: list = None, update_resources: list 
         action_map = perms.get(action)
         if isinstance(action_map, dict) and any(effect == 'allow' for effect in action_map.values()):
             return True
+    # In black mode an action no policy denies is allowed, so resolve it the way expose_resources does
+    if perms.get('rbac_mode') == 'black':
+        try:
+            allow = _match_permissions(req_permissions={'manager:update_config': ['*:*:*'],
+                                                        'cluster:update_config': ['node:id:*']},
+                                       rbac_mode='black')
+        except Exception:
+            return False
+        return any(allow.values())
     return False
 
 
