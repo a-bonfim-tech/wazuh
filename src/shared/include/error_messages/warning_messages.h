@@ -19,6 +19,9 @@
                                    "present: TLS verification stays disabled, as configured, and the anchor is " \
                                    "not used. Remove <verification_mode>none</verification_mode> to verify " \
                                    "against it."
+#define AG_SSL_NONE_TOKEN_ENROLL_VERIFIED "(4126): <ssl><verification_mode> is 'none', but that only applies once the " \
+                                          "agent is enrolled: token enrollment still verifies the manager's " \
+                                          "certificate against the CA the enrollment token provides."
 
 /* File integrity monitoring warning messages*/
 #define FIM_WARN_ACCESS                         "(6900): Accessing  '%s': [(%d) - (%s)]"
